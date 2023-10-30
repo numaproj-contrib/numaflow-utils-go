@@ -1,2 +1,2 @@
 # numaflow-utils-go
-Utility libraries to help developing Numaflow pipelines
+Utility libraries to help develop Numaflow user-defined artifacts in Go.
