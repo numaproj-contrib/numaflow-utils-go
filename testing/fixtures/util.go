@@ -124,8 +124,7 @@ func WaitForISBSvcReady(ctx context.Context, isbSvcClient flowpkg.InterStepBuffe
 	}
 }
 
-func WaitForISBSvcStatefulSetReady(ctx context.Context, kubeClient kubernetes.Interface, namespace, isbSvcName string, timeout time.Duration) error {
-	labelSelector := fmt.Sprintf("%s=isbsvc-controller,%s=%s", dfv1.KeyManagedBy, dfv1.KeyISBSvcName, isbSvcName)
+func WaitForStatefulSetReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, labelSelector string) error {
 	opts := metav1.ListOptions{LabelSelector: labelSelector}
 	watch, err := kubeClient.AppsV1().StatefulSets(namespace).Watch(ctx, opts)
 	if err != nil {
@@ -138,6 +137,11 @@ func WaitForISBSvcStatefulSetReady(ctx context.Context, kubeClient kubernetes.In
 		timeoutCh <- true
 	}()
 
+	var (
+		replicas int32
+		svcName  string
+	)
+
 statefulSetWatch:
 	for {
 		select {
@@ -145,13 +149,15 @@ statefulSetWatch:
 			ss, ok := event.Object.(*appsv1.StatefulSet)
 			if ok {
 				if ss.Status.Replicas == ss.Status.ReadyReplicas {
+					replicas = ss.Status.Replicas
+					svcName = ss.Name
 					break statefulSetWatch
 				}
 			} else {
 				return fmt.Errorf("not statefulset")
 			}
 		case <-timeoutCh:
-			return fmt.Errorf("timeout after %v waiting for ISB svc StatefulSet ready", timeout)
+			return fmt.Errorf("timeout after %v waiting for %s svc StatefulSet ready", timeout, svcName)
 		}
 	}
 
@@ -169,8 +175,7 @@ statefulSetWatch:
 
 	podNames := make(map[string]bool)
 	for {
-		if len(podNames) == 3 {
-			// defaults to 3 Pods
+		if len(podNames) == int(replicas) {
 			return nil
 		}
 		select {
@@ -194,7 +199,7 @@ statefulSetWatch:
 				return fmt.Errorf("not pod")
 			}
 		case <-podTimeoutCh:
-			return fmt.Errorf("timeout after %v waiting for ISB svc Pod ready", timeout)
+			return fmt.Errorf("timeout after %v waiting for %s Pod ready", timeout, svcName)
 		}
 	}
 }

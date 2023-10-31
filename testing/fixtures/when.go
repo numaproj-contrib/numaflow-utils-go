@@ -159,7 +159,19 @@ func (w *When) WaitForISBSvcReady() *When {
 	if err := WaitForISBSvcReady(ctx, w.isbSvcClient, w.isbSvc.Name, defaultTimeout); err != nil {
 		w.t.Fatal(err)
 	}
-	if err := WaitForISBSvcStatefulSetReady(ctx, w.kubeClient, Namespace, w.isbSvc.Name, 5*time.Minute); err != nil {
+
+	isbSvclabels := fmt.Sprintf("%s=isbsvc-controller,%s=%s", dfv1.KeyManagedBy, dfv1.KeyISBSvcName, w.isbSvc.Name)
+	if err := w.WaitForStatefulSetReady(isbSvclabels); err != nil {
+		w.t.Fatal(err)
+	}
+
+	return w
+}
+
+func (w *When) WaitForStatefulSetReady(labelSelector string) *When {
+	w.t.Helper()
+	ctx := context.Background()
+	if err := WaitForStatefulSetReady(ctx, w.kubeClient, 5*time.Minute, Namespace, labelSelector); err != nil {
 		w.t.Fatal(err)
 	}
 	return w
