@@ -161,7 +161,7 @@ func (w *When) WaitForISBSvcReady() *When {
 	}
 
 	isbSvclabels := fmt.Sprintf("%s=isbsvc-controller,%s=%s", dfv1.KeyManagedBy, dfv1.KeyISBSvcName, w.isbSvc.Name)
-	if err := w.WaitForStatefulSetReady(isbSvclabels); err != nil {
+	if err := WaitForStatefulSetReady(ctx, w.kubeClient, 5*time.Minute, Namespace, isbSvclabels); err != nil {
 		w.t.Fatal(err)
 	}
 
@@ -174,6 +174,7 @@ func (w *When) WaitForStatefulSetReady(labelSelector string) *When {
 	if err := WaitForStatefulSetReady(ctx, w.kubeClient, 5*time.Minute, Namespace, labelSelector); err != nil {
 		w.t.Fatal(err)
 	}
+
 	return w
 }
 
