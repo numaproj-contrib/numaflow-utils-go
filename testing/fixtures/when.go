@@ -178,6 +178,16 @@ func (w *When) WaitForStatefulSetReady(labelSelector string) *When {
 	return w
 }
 
+func (w *When) WaitForPodReady(labelSelector string) *When {
+	w.t.Helper()
+	ctx := context.Background()
+	if err := WaitForPodToBeReady(ctx, w.kubeClient, 5*time.Minute, Namespace, labelSelector); err != nil {
+		w.t.Fatal(err)
+	}
+
+	return w
+}
+
 func (w *When) VertexPodPortForward(vertexName string, localPort, remotePort int) *When {
 	w.t.Helper()
 	labelSelector := fmt.Sprintf("%s=%s,%s=%s", dfv1.KeyPipelineName, w.pipeline.Name, dfv1.KeyVertexName, vertexName)
