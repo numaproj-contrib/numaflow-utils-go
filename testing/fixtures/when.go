@@ -178,10 +178,10 @@ func (w *When) WaitForStatefulSetReady(labelSelector string) *When {
 	return w
 }
 
-func (w *When) WaitForPodReady(labelSelector string) *When {
+func (w *When) WaitForPodReady(podName string) *When {
 	w.t.Helper()
 	ctx := context.Background()
-	if err := WaitForPodToBeReady(ctx, w.kubeClient, 5*time.Minute, Namespace, labelSelector); err != nil {
+	if err := WaitForPodToBeReady(ctx, w.kubeClient, 5*time.Minute, Namespace, podName); err != nil {
 		w.t.Fatal(err)
 	}
 
