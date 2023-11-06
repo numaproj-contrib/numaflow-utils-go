@@ -237,8 +237,7 @@ func WaitForPipelineRunning(ctx context.Context, pipelineClient flowpkg.Pipeline
 
 // WaitForPodToBeReady waits for a Pod to be in Running state.
 func WaitForPodToBeReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, podName string) error {
-	labelSelector := fmt.Sprintf("metadata.name=%s", podName)
-	opts := metav1.ListOptions{LabelSelector: labelSelector}
+	opts := metav1.ListOptions{LabelSelector: podName}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
