@@ -121,7 +121,7 @@ func (w *When) CreatePipelineAndWait() *When {
 	return w
 }
 
-func (w *When) DeletePipelineAndWait(timeoutArgs ...time.Duration) *When {
+func (w *When) DeletePipelineAndWait(argTimeout ...time.Duration) *When {
 	w.t.Helper()
 	if w.pipeline == nil {
 		w.t.Fatal("No Pipeline to delete")
@@ -132,8 +132,8 @@ func (w *When) DeletePipelineAndWait(timeoutArgs ...time.Duration) *When {
 		w.t.Fatal(err)
 	}
 	timeout := defaultTimeout
-	if len(timeoutArgs) > 0 {
-		timeout = timeoutArgs[0]
+	if len(argTimeout) > 0 {
+		timeout = argTimeout[0]
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
