@@ -22,6 +22,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"k8s.io/apimachinery/pkg/watch"
 	"os"
 	"os/exec"
 	"regexp"
@@ -232,6 +233,66 @@ func WaitForPipelineRunning(ctx context.Context, pipelineClient flowpkg.Pipeline
 			return fmt.Errorf("timeout after %v waiting for Pipeline running", timeout)
 		}
 	}
+}
+
+func WaitForPodToBeReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, podName string) error {
+	labelSelector := fmt.Sprintf("name=%s", podName)
+
+	// Define a ListOptions with the labelSelector
+	opts := metav1.ListOptions{LabelSelector: labelSelector}
+
+	// Create a context with timeout
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	// Start watching for Pod updates before listing to prevent missing any updates
+	watchInterface, err := kubeClient.CoreV1().Pods(namespace).Watch(ctx, opts)
+	if err != nil {
+		return fmt.Errorf("failed to start watching for pod readiness: %v", err)
+	}
+	defer watchInterface.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return fmt.Errorf("timeout after %v waiting for pod %s to be ready", timeout, podName)
+		case event, ok := <-watchInterface.ResultChan():
+			if !ok {
+				return fmt.Errorf("watch channel for pod %s closed", podName)
+			}
+
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching pod %s", podName)
+			}
+
+			pod, ok := event.Object.(*corev1.Pod)
+			if !ok {
+				return fmt.Errorf("unexpected type when watching pod")
+			}
+
+			if pod.Name != podName {
+				continue // Skip if it's not the pod we're waiting for
+			}
+
+			if isPodReady(pod) {
+				fmt.Printf("Pod %s is now ready\n", podName)
+				return nil
+			}
+		}
+	}
+}
+
+// isPodReady checks if a Pod is in a Running state and all containers are ready.
+func isPodReady(pod *corev1.Pod) bool {
+	if pod.Status.Phase != corev1.PodRunning {
+		return false
+	}
+	for _, cond := range pod.Status.Conditions {
+		if cond.Type == corev1.PodReady && cond.Status == corev1.ConditionTrue {
+			return true
+		}
+	}
+	return false
 }
 
 func WaitForVertexPodRunning(kubeClient kubernetes.Interface, vertexClient flowpkg.VertexInterface, namespace, pipelineName, vertexName string, timeout time.Duration) error {

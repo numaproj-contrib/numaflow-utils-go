@@ -121,7 +121,7 @@ func (w *When) CreatePipelineAndWait() *When {
 	return w
 }
 
-func (w *When) DeletePipelineAndWait() *When {
+func (w *When) DeletePipelineAndWait(timeoutArgs ...time.Duration) *When {
 	w.t.Helper()
 	if w.pipeline == nil {
 		w.t.Fatal("No Pipeline to delete")
@@ -131,8 +131,10 @@ func (w *When) DeletePipelineAndWait() *When {
 	if err := w.pipelineClient.Delete(ctx, w.pipeline.Name, metav1.DeleteOptions{}); err != nil {
 		w.t.Fatal(err)
 	}
-
 	timeout := defaultTimeout
+	if len(timeoutArgs) > 0 {
+		timeout = timeoutArgs[0]
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	labelSelector := fmt.Sprintf("%s=%s", dfv1.KeyPipelineName, w.pipeline.Name)
@@ -172,6 +174,16 @@ func (w *When) WaitForStatefulSetReady(labelSelector string) *When {
 	w.t.Helper()
 	ctx := context.Background()
 	if err := WaitForStatefulSetReady(ctx, w.kubeClient, 5*time.Minute, Namespace, labelSelector); err != nil {
+		w.t.Fatal(err)
+	}
+
+	return w
+}
+
+func (w *When) WaitForPodReady(podName string) *When {
+	w.t.Helper()
+	ctx := context.Background()
+	if err := WaitForPodToBeReady(ctx, w.kubeClient, 5*time.Minute, Namespace, podName); err != nil {
 		w.t.Fatal(err)
 	}
 
