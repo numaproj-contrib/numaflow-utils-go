@@ -121,7 +121,7 @@ func (w *When) CreatePipelineAndWait() *When {
 	return w
 }
 
-func (w *When) DeletePipelineAndWait() *When {
+func (w *When) DeletePipelineAndWait(timeout time.Duration) *When {
 	w.t.Helper()
 	if w.pipeline == nil {
 		w.t.Fatal("No Pipeline to delete")
@@ -132,7 +132,7 @@ func (w *When) DeletePipelineAndWait() *When {
 		w.t.Fatal(err)
 	}
 
-	timeout := defaultTimeout
+	//timeout := defaultTimeout
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	labelSelector := fmt.Sprintf("%s=%s", dfv1.KeyPipelineName, w.pipeline.Name)
