@@ -22,13 +22,14 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"k8s.io/apimachinery/pkg/watch"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/watch"
 
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -235,8 +236,7 @@ func WaitForPipelineRunning(ctx context.Context, pipelineClient flowpkg.Pipeline
 	}
 }
 
-func WaitForPodToBeReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, podName string) error {
-	labelSelector := fmt.Sprintf("name=%s", podName)
+func WaitForPodToBeReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, podName string, labelSelector string) error {
 
 	// Define a ListOptions with the labelSelector
 	opts := metav1.ListOptions{LabelSelector: labelSelector}

@@ -121,7 +121,7 @@ func (w *When) CreatePipelineAndWait() *When {
 	return w
 }
 
-func (w *When) DeletePipelineAndWait(timeoutArgs ...time.Duration) *When {
+func (w *When) DeletePipelineAndWait(argTimeout ...time.Duration) *When {
 	w.t.Helper()
 	if w.pipeline == nil {
 		w.t.Fatal("No Pipeline to delete")
@@ -132,8 +132,8 @@ func (w *When) DeletePipelineAndWait(timeoutArgs ...time.Duration) *When {
 		w.t.Fatal(err)
 	}
 	timeout := defaultTimeout
-	if len(timeoutArgs) > 0 {
-		timeout = timeoutArgs[0]
+	if len(argTimeout) > 0 {
+		timeout = argTimeout[0]
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -180,10 +180,10 @@ func (w *When) WaitForStatefulSetReady(labelSelector string) *When {
 	return w
 }
 
-func (w *When) WaitForPodReady(podName string) *When {
+func (w *When) WaitForPodReady(podName string, labelSelector string) *When {
 	w.t.Helper()
 	ctx := context.Background()
-	if err := WaitForPodToBeReady(ctx, w.kubeClient, 5*time.Minute, Namespace, podName); err != nil {
+	if err := WaitForPodToBeReady(ctx, w.kubeClient, 5*time.Minute, Namespace, podName, labelSelector); err != nil {
 		w.t.Fatal(err)
 	}
 
