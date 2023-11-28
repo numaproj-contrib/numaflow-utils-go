@@ -236,8 +236,7 @@ func WaitForPipelineRunning(ctx context.Context, pipelineClient flowpkg.Pipeline
 	}
 }
 
-func WaitForPodToBeReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, podName string) error {
-	labelSelector := fmt.Sprintf("app=%s", podName)
+func WaitForPodToBeReady(ctx context.Context, kubeClient kubernetes.Interface, timeout time.Duration, namespace, podName string, labelSelector string) error {
 
 	// Define a ListOptions with the labelSelector
 	opts := metav1.ListOptions{LabelSelector: labelSelector}
